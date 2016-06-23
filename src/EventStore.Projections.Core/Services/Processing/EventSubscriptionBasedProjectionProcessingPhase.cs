@@ -6,6 +6,7 @@ using EventStore.Core.Messaging;
 using EventStore.Core.Services.TimerService;
 using EventStore.Projections.Core.Messages;
 using EventStore.Projections.Core.Messaging;
+using System.Linq;
 
 namespace EventStore.Projections.Core.Services.Processing
 {
@@ -42,6 +43,7 @@ namespace EventStore.Projections.Core.Services.Processing
         protected PhaseState _state;
         protected readonly bool _stopOnEof;
         private readonly bool _isBiState;
+        protected readonly IEmittedStreamManager _emittedStreamManager;
 
         private readonly Action _updateStatistics;
 
@@ -63,7 +65,8 @@ namespace EventStore.Projections.Core.Services.Processing
             bool useCheckpoints,
             bool stopOnEof,
             bool orderedPartitionProcessing,
-            bool isBiState)
+            bool isBiState,
+            IEmittedStreamManager emittedStreamManager)
         {
             _publisher = publisher;
             _inputQueue = inputQueue;
@@ -88,6 +91,7 @@ namespace EventStore.Projections.Core.Services.Processing
             _isBiState = isBiState;
             _progressResultWriter = new ProgressResultWriter(this, _resultWriter);
             _inutQueueEnvelope = new PublishEnvelope(_inputQueue);
+            _emittedStreamManager = emittedStreamManager;
         }
 
         public void UnlockAndForgetBefore(CheckpointTag checkpointTag)
@@ -526,8 +530,11 @@ namespace EventStore.Projections.Core.Services.Processing
                 {
                     _resultWriter.AccountPartition(result);
                     if (_projectionConfig.EmitEventEnabled && result.EmittedEvents != null)
+                    {
                         _resultWriter.EventsEmitted(
                             result.EmittedEvents, result.CausedBy, result.CorrelationId);
+                        _emittedStreamManager.TrackEmittedStream(result.EmittedEvents.Select(x => x.Event).ToArray());
+                    }
                     if (result.NewState != null)
                     {
                         _resultWriter.WriteRunningResult(result);

@@ -45,7 +45,8 @@ namespace EventStore.Projections.Core.Services.Processing
             bool useCheckpoints,
             bool stopOnEof,
             bool isBiState,
-            bool orderedPartitionProcessing)
+            bool orderedPartitionProcessing,
+            IEmittedStreamManager emittedStreamManager)
             : base(
                 publisher,
                 inputQueue,
@@ -64,7 +65,8 @@ namespace EventStore.Projections.Core.Services.Processing
                 useCheckpoints,
                 stopOnEof,
                 orderedPartitionProcessing,
-                isBiState)
+                isBiState,
+                emittedStreamManager)
         {
 
             _projectionStateHandler = projectionStateHandler;

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using EventStore.Common.Utils;
 using EventStore.Core.Messages;
 using EventStore.Core.Messaging;
 using EventStore.Projections.Core.Messages;
@@ -11,9 +11,10 @@ using NUnit.Framework;
 namespace EventStore.Projections.Core.Tests.Services.projections_manager
 {
     [TestFixture]
-    public class when_deleting_a_persistent_projection_and_not_authorised : TestFixtureWithProjectionCoreAndManagementServices
+    public class when_deleting_a_persistent_projection_and_keep_emitted_streams_stream : TestFixtureWithProjectionCoreAndManagementServices
     {
         private string _projectionName;
+        private const string _projectionEmittedStreamsStream = "$projections-test-projection-emittedstreams";
 
         protected override void Given()
         {
@@ -30,22 +31,29 @@ namespace EventStore.Projections.Core.Tests.Services.projections_manager
                 new ProjectionManagementMessage.Command.Post(
                     new PublishEnvelope(_bus), ProjectionMode.Continuous, _projectionName,
                     ProjectionManagementMessage.RunAs.System, "JS", @"fromAll().whenAny(function(s,e){return s;});",
-                    enabled: true, checkpointsEnabled: true, emitEnabled: false, trackEmittedStreams: true);
+                    enabled: true, checkpointsEnabled: true, emitEnabled: true, trackEmittedStreams: true);
             yield return
                 new ProjectionManagementMessage.Command.Disable(
                     new PublishEnvelope(_bus), _projectionName, ProjectionManagementMessage.RunAs.System);
             yield return
                 new ProjectionManagementMessage.Command.Delete(
                     new PublishEnvelope(_bus), _projectionName,
-                    ProjectionManagementMessage.RunAs.Anonymous, false, false, false);
+                    ProjectionManagementMessage.RunAs.System, false, false, false);
         }
 
         [Test, Category("v8")]
-        public void a_projection_deleted_event_is_not_written()
+        public void a_projection_deleted_event_is_written()
         {
-            Assert.AreNotEqual(
-                "$ProjectionDeleted",
-                _consumer.HandledMessages.OfType<ClientMessage.WriteEvents>().Last().Events[0].EventType, "$ProjectionDeleted event was not supposed to be written");
+            Assert.AreEqual(
+                true,
+                _consumer.HandledMessages.OfType<ClientMessage.WriteEvents>().Any(x => x.Events[0].EventType == "$ProjectionDeleted" && Helper.UTF8NoBom.GetString(x.Events[0].Data) == _projectionName));
+        }
+
+        [Test, Category("v8")]
+        public void should_not_have_attempted_to_delete_the_emitted_streams_stream()
+        {
+            Assert.IsFalse(
+                _consumer.HandledMessages.OfType<ClientMessage.DeleteStream>().Any(x=>x.EventStreamId == _projectionEmittedStreamsStream));
         }
     }
 }

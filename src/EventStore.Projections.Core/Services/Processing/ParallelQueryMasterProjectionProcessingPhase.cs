@@ -42,7 +42,8 @@ namespace EventStore.Projections.Core.Services.Processing
             IResultWriter resultWriter,
             bool checkpointsEnabled,
             bool stopOnEof,
-            SpooledStreamReadingDispatcher spoolProcessingResponseDispatcher)
+            SpooledStreamReadingDispatcher spoolProcessingResponseDispatcher,
+            IEmittedStreamManager emittedStreamManager)
             : base(
                 publisher,
                 inputQueue,
@@ -61,7 +62,8 @@ namespace EventStore.Projections.Core.Services.Processing
                 checkpointsEnabled,
                 stopOnEof,
                 orderedPartitionProcessing: true,
-                isBiState: false)
+                isBiState: false,
+                emittedStreamManager: emittedStreamManager)
         {
             _stateHandler = stateHandler;
             _spoolProcessingResponseDispatcher = spoolProcessingResponseDispatcher;

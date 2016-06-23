@@ -383,7 +383,7 @@ namespace EventStore.Projections.Core.Services.Processing
                         _publisher.Publish(
                             new ProjectionManagementMessage.Command.Delete(
                                 new NoopEnvelope(), channel.ManagedProjectionName,
-                                ProjectionManagementMessage.RunAs.System, true, true));
+                                ProjectionManagementMessage.RunAs.System, true, true, false));
                     }
                 }
 

@@ -28,6 +28,8 @@ namespace EventStore.Projections.Core.Services.Processing
         private readonly string _partitionCatalogStreamName;
         private readonly string _checkpointStreamName;
         private readonly string _orderStreamName;
+        private readonly string _emittedStreamsName;
+        private readonly string _emittedStreamsCheckpointName;
 
         public static TimeSpan MasterStreamMaxAge = TimeSpan.FromHours(2);
         public static TimeSpan ControlStreamMaxAge = TimeSpan.FromHours(2);
@@ -50,6 +52,8 @@ namespace EventStore.Projections.Core.Services.Processing
                                           + ProjectionPartitionCatalogStreamSuffix;
             _checkpointStreamName = ProjectionsStreamPrefix + EffectiveProjectionName + ProjectionCheckpointStreamSuffix;
             _orderStreamName = ProjectionsStreamPrefix + EffectiveProjectionName + ProjectionOrderStreamSuffix;
+            _emittedStreamsName = ProjectionsStreamPrefix + EffectiveProjectionName + ProjectionEmittedStreamSuffix;
+            _emittedStreamsCheckpointName = ProjectionsStreamPrefix + EffectiveProjectionName + ProjectionEmittedStreamSuffix + ProjectionCheckpointStreamSuffix;
         }
 
         public string EffectiveProjectionName
@@ -78,6 +82,7 @@ namespace EventStore.Projections.Core.Services.Processing
         private const string ProjectionsControlStreamPrefix = "$projections-$";
         private const string ProjectionsStateStreamSuffix = "-result";
         private const string ProjectionCheckpointStreamSuffix = "-checkpoint";
+        private const string ProjectionEmittedStreamSuffix = "-emittedstreams";
         private const string ProjectionOrderStreamSuffix = "-order";
         private const string ProjectionPartitionCatalogStreamSuffix = "-partitions";
         private const string CategoryCatalogStreamNamePrefix = "$category-";
@@ -114,6 +119,16 @@ namespace EventStore.Projections.Core.Services.Processing
         public string MakeCheckpointStreamName()
         {
             return _checkpointStreamName;
+        }
+
+        public string MakeEmittedStreamsName()
+        {
+            return _emittedStreamsName;
+        }
+
+        public string MakeEmittedStreamsCheckpointName()
+        {
+            return _emittedStreamsCheckpointName;
         }
 
         public string GetOrderStreamName()

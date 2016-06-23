@@ -132,7 +132,8 @@ namespace EventStore.Projections.Core.Services.Processing
             CheckpointTag zeroCheckpointTag,
             ICoreProjectionCheckpointManager checkpointManager,
             IReaderStrategy readerStrategy,
-            IResultWriter resultWriter)
+            IResultWriter resultWriter,
+            IEmittedStreamManager emittedStreamManager)
         {
             return new ParallelQueryMasterProjectionProcessingPhase(
                 coreProjection,
@@ -152,7 +153,8 @@ namespace EventStore.Projections.Core.Services.Processing
                 resultWriter,
                 _projectionConfig.CheckpointsEnabled,
                 this.GetStopOnEof(),
-                _spoolProcessingResponseDispatcher);
+                _spoolProcessingResponseDispatcher,
+                emittedStreamManager);
         }
 
         public override bool GetStopOnEof()
@@ -191,7 +193,7 @@ namespace EventStore.Projections.Core.Services.Processing
                     new SlaveProjectionDefinitions.Definition(
                         "slave", _handlerType, _query,
                         SlaveProjectionDefinitions.SlaveProjectionRequestedNumber.OnePerThread, ProjectionMode.Transient,
-                        _projectionConfig.EmitEventEnabled, _projectionConfig.CheckpointsEnabled,
+                        _projectionConfig.EmitEventEnabled, _projectionConfig.CheckpointsEnabled, trackEmittedStreams: _projectionConfig.TrackEmittedStreams,
                         runAs1: new ProjectionManagementMessage.RunAs(_projectionConfig.RunAs), enableRunAs: true));
         }
     }
